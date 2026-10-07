@@ -1,29 +1,45 @@
+// Sadece saf marka savunma varyasyonları (Asla bağımsız proje olmayacaklar):
+const PURE_BRAND_DEFENSIVE = [
+  'kibrisim.tr',
+  'imkibris.com.tr',
+  'imkibris.tr'
+];
+
 export default {
   async fetch(request) {
     const url = new URL(request.url);
-    const hostname = url.hostname.replace(/^www\./, '');
+    const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
 
-    // 1. kibris.im — ShortURL & QR Ağ Geçidi (301 Kalıcı Yönlendirme)
-    if (hostname === 'kibris.im') {
+    // 1. Saf marka varyasyonları -> 301 ile ana kurumsal adrese
+    if (PURE_BRAND_DEFENSIVE.includes(hostname)) {
       return Response.redirect('https://kibrisim.com.tr' + url.pathname, 301);
     }
 
-    // 2. robots.txt (Googlebot / Bingbot İndeksleme İzni)
+    // 2. kibris.im (2013 Otoritesi Koruma Altında):
+    // Kök dizinde 301 kilitlemesi YOK! Kısa linkler ise geçici 302 ile hedefe akar:
+    if (hostname === 'kibris.im' && url.pathname.length > 1) {
+      return Response.redirect('https://beta.kibris.im' + url.pathname, 302);
+    }
+
+    // 3. robots.txt
     if (url.pathname === '/robots.txt') {
       return new Response("User-agent: *\nAllow: /\nSitemap: https://kibrisim.com.tr/sitemap.xml", {
         headers: { 'Content-Type': 'text/plain; charset=UTF-8' },
       });
     }
 
-    // 3. kibrisim.com.tr — Light/Dark Destekli, en-GB Şemalı No-Branding Sayfa
+    // 4. kibrisim.com.tr ve kibris.im İçin Dinamik No-Branding (HTTP 200 OK)
+    // Ziyaret edilen domaine göre başlığı dinamik gösterir:
+    const displayHost = hostname === 'kibris.im' ? 'kibris.im' : 'kibrisim.com.tr';
+
     const html = `<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kıbrısım — Kuzey Kıbrıs Dijital Altyapı ve Veri Ağı</title>
+  <title>${displayHost} — Kuzey Kıbrıs Dijital Altyapı ve Veri Ağı</title>
   <meta name="description" content="Kuzey Kıbrıs Türk Cumhuriyeti genelinde yerel işletme, mekan ve hizmet ağı veri altyapısı.">
-  <link rel="canonical" href="https://kibrisim.com.tr/">
+  <link rel="canonical" href="https://${displayHost}/">
   <meta name="robots" content="index, follow">
 
   <!-- SEOPress & en-GB Uyumlu Google Deep Tree Şeması -->
@@ -33,28 +49,28 @@ export default {
     "@graph": [
       {
         "@type": "WebSite",
-        "@id": "https://kibrisim.com.tr/#website",
-        "url": "https://kibrisim.com.tr/",
+        "@id": "https://${displayHost}/#website",
+        "url": "https://${displayHost}/",
         "name": "Kıbrısım",
         "inLanguage": ["tr-TR", "en-GB", "ru-RU"],
         "description": "Kuzey Kıbrıs Yerel Güven ve Keşif Ekosistemi",
         "potentialAction": {
           "@type": "SearchAction",
-          "target": "https://kibrisim.com.tr/kesfet/?keyword={search_term_string}",
+          "target": "https://${displayHost}/kesfet/?keyword={search_term_string}",
           "query-input": "required name=search_term_string"
         }
       },
       {
         "@type": "ItemList",
-        "@id": "https://kibrisim.com.tr/#districts",
+        "@id": "https://${displayHost}/#districts",
         "name": "Kuzey Kıbrıs İlçeleri",
         "itemListElement": [
-          { "@type": "SiteNavigationElement", "position": 1, "name": "Lefkoşa", "url": "https://kibrisim.com.tr/bolge/lefkosa/" },
-          { "@type": "SiteNavigationElement", "position": 2, "name": "Girne", "url": "https://kibrisim.com.tr/bolge/girne/" },
-          { "@type": "SiteNavigationElement", "position": 3, "name": "Gazimağusa", "url": "https://kibrisim.com.tr/bolge/gazimagusa/" },
-          { "@type": "SiteNavigationElement", "position": 4, "name": "İskele", "url": "https://kibrisim.com.tr/bolge/iskele/" },
-          { "@type": "SiteNavigationElement", "position": 5, "name": "Güzelyurt", "url": "https://kibrisim.com.tr/bolge/guzelyurt/" },
-          { "@type": "SiteNavigationElement", "position": 6, "name": "Lefke", "url": "https://kibrisim.com.tr/bolge/lefke/" }
+          { "@type": "SiteNavigationElement", "position": 1, "name": "Lefkoşa", "url": "https://${displayHost}/bolge/lefkosa/" },
+          { "@type": "SiteNavigationElement", "position": 2, "name": "Girne", "url": "https://${displayHost}/bolge/girne/" },
+          { "@type": "SiteNavigationElement", "position": 3, "name": "Gazimağusa", "url": "https://${displayHost}/bolge/gazimagusa/" },
+          { "@type": "SiteNavigationElement", "position": 4, "name": "İskele", "url": "https://${displayHost}/bolge/iskele/" },
+          { "@type": "SiteNavigationElement", "position": 5, "name": "Güzelyurt", "url": "https://${displayHost}/bolge/guzelyurt/" },
+          { "@type": "SiteNavigationElement", "position": 6, "name": "Lefke", "url": "https://${displayHost}/bolge/lefke/" }
         ]
       }
     ]
@@ -130,7 +146,7 @@ export default {
 </head>
 <body>
   <div class="container">
-    <h1>kibrisim.com.tr</h1>
+    <h1>${displayHost}</h1>
     <p>
       Kuzey Kıbrıs yerel işletme, mekan ve hizmet ekosistemi veri altyapısı hazırlık aşamasındadır.<br>
       <span style="font-size: 0.88rem; opacity: 0.75; display: block; margin-top: 0.4rem;">

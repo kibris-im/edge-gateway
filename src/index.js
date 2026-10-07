@@ -1,4 +1,4 @@
-// 1. Genişletilmiş Saf Marka Defansif Varyasyonları (ASCII + IDN Punycode)
+// 1. Saf Marka Defansif Varyasyonları (ASCII + IDN Punycode)
 const PURE_BRAND_DEFENSIVE = [
   // .tr / .com.tr Ailesi
   'kibrisim.tr',
@@ -24,13 +24,13 @@ export default {
     const url = new URL(request.url);
     const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
 
-    // 1. Tüm marka savunma varyasyonları -> 301 ile kibrisim.com.tr'ye
+    // 1. Marka savunma varyasyonları -> Lansman öncesi esneklik için 302 ile kibrisim.com.tr'ye
     if (PURE_BRAND_DEFENSIVE.includes(hostname)) {
-      return Response.redirect('https://kibrisim.com.tr' + url.pathname, 301);
+      return Response.redirect('https://kibrisim.com.tr' + url.pathname, 302);
     }
 
     // 2. kibris.im (2013 Otoritesi Koruma Altında):
-    // Kök dizinde 301 kilitlemesi YOK! Bağımsız 200 OK verir. Kısa linkler 302 ile gider:
+    // Kök dizinde yönlendirme YOK, bağımsız 200 OK verir. Kısa linkler geçici 302 ile hedefe akar:
     if (hostname === 'kibris.im' && url.pathname.length > 1) {
       return Response.redirect('https://beta.kibris.im' + url.pathname, 302);
     }

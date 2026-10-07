@@ -1,8 +1,16 @@
-// Sadece saf marka savunma varyasyonları (Asla bağımsız proje olmayacaklar):
+// 1. Saf Marka Defansif Varyasyonları (ASCII + Türkçe Karakterli Punycode)
 const PURE_BRAND_DEFENSIVE = [
+  // ASCII Varyasyonlar
   'kibrisim.tr',
+  'imkibris.com',
   'imkibris.com.tr',
-  'imkibris.tr'
+  'imkibris.tr',
+
+  // Türkçe Karakterli (Punycode) Varyasyonlar
+  'xn--kbrsm-o4a62a.com.tr', // kıbrısım.com.tr
+  'xn--kbrsm-o4a62a.tr',     // kıbrısım.tr
+  'xn--imkbrs-s9a.com.tr',    // imkıbrıs.com.tr
+  'xn--imkbrs-s9a.tr'         // imkıbrıs.tr
 ];
 
 export default {
@@ -10,13 +18,13 @@ export default {
     const url = new URL(request.url);
     const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
 
-    // 1. Saf marka varyasyonları -> 301 ile ana kurumsal adrese
+    // 1. Saf marka varyasyonları -> 301 ile kibrisim.com.tr'ye
     if (PURE_BRAND_DEFENSIVE.includes(hostname)) {
       return Response.redirect('https://kibrisim.com.tr' + url.pathname, 301);
     }
 
     // 2. kibris.im (2013 Otoritesi Koruma Altında):
-    // Kök dizinde 301 kilitlemesi YOK! Kısa linkler ise geçici 302 ile hedefe akar:
+    // Kök dizinde 301 kilitlemesi YOK! Bağımsız 200 OK verir. Kısa linkler ise geçici 302 ile hedefe akar:
     if (hostname === 'kibris.im' && url.pathname.length > 1) {
       return Response.redirect('https://beta.kibris.im' + url.pathname, 302);
     }
@@ -29,7 +37,6 @@ export default {
     }
 
     // 4. kibrisim.com.tr ve kibris.im İçin Dinamik No-Branding (HTTP 200 OK)
-    // Ziyaret edilen domaine göre başlığı dinamik gösterir:
     const displayHost = hostname === 'kibris.im' ? 'kibris.im' : 'kibrisim.com.tr';
 
     const html = `<!DOCTYPE html>
@@ -102,7 +109,7 @@ export default {
     body {
       background-color: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       min-height: 100vh;
       display: flex;
       align-items: center;
